@@ -1,3 +1,12 @@
+/*
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ESP32 WEMOS LOLIN32 Lite based guitar tuner guitarTunerDisplay library
+  by Mikołaj Kawa (2024)
+  This library takes care of led display connected to ESP32 GPIO pins 
+  For more info look up to project's repository. Cheers!
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*/
+
 #ifndef GUITARTUNERDISPLAY_H
 #define GUITARTUNERDISPLAY_H
 
