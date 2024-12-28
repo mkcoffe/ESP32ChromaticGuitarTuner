@@ -1,4 +1,4 @@
-#ESP32-based Guitar Tuner
+# ESP32-based Guitar Tuner
 Documentation of a devices that performs as fully standalone tuner dedicated for eletric guitars.
 This repository is dedicated to my engineering thesis which is ESP32 microcontroller-based guitar tuner.
 The goal of this project is to create a uC-based chromatic guitar tuner with acceptable precision and simple
