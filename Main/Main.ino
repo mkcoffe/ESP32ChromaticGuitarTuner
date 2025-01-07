@@ -15,6 +15,7 @@
 #define SAMPLING_FREQUENCY 4840
 #define ANALOG_PIN 36
 #define BUFFER_LENGTH 512
+#define FREQUENCIES_ARRAY_LENGTH 43 
 
 #define NOISE_THRESHOLD_CONTROL 0
 #define FREQUENCY_PEAK_THRESHOLD 900
@@ -31,14 +32,14 @@ volatile int sampleIndex = 0;
 float realValues[BUFFER_LENGTH];
 float imaginaryValues[BUFFER_LENGTH];
 
-const float frequencies[43] = {
+const float frequencies[FREQUENCIES_ARRAY_LENGTH] = {
     65.41, 69.30, 73.42, 77.78, 82.41, 87.31, 92.50, 98.00, 103.83, 110.00, 
     116.54, 123.47, 130.81, 138.59, 146.83, 155.56, 164.81, 174.61, 185.00, 
     196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 
     329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 
     554.37, 587.33, 622.25, 659.25};  
-
-const char* noteNames[43] = {
+ 
+const char* noteNames[FREQUENCIES_ARRAY_LENGTH] = {
     "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", 
     "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", 
     "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", 
@@ -85,7 +86,6 @@ void setup()
 
 void loop() 
 { 
- 
   if (ISRFlag)
   {
     portENTER_CRITICAL_ISR(&timerMux);
@@ -98,9 +98,10 @@ void loop()
   if (sampleIndex >= BUFFER_LENGTH) 
   { 
     sampleIndex = 0;
-    digitalWrite(DEBBUG_LED, !digitalRead(DEBBUG_LED));
+    digitalWrite(DEBBUG_LED, !digitalRead(DEBBUG_LED)); //debug purpose only
     portENTER_CRITICAL_ISR(&timerMux);
-    float signalAbsMaxValue = 0.0;
+    //insert values obtained in analog buffer to a float array. 
+    //imaginaryValues set to zero (obtained signal is clearly Real)
     for (int i = 0; i < BUFFER_LENGTH; i++) 
     {
       realValues[i] = (float)signalBuffer[i];
@@ -110,7 +111,7 @@ void loop()
     FFT.dcRemoval();
     FFT.windowing(FFTWindow::Blackman_Harris, FFTDirection::Forward);
     FFT.compute(FFT_FORWARD);
-    calculateMagnitude();
+    calculateMagnitude(); 
    
     /*
     // Print spectrum in search range DO NOT PRINT WHILE RESULTS ARE ALSO PRINTING
@@ -139,6 +140,7 @@ void loop()
 
 void calculateMagnitude()
 {
+  //function performs FFT.complexToMagnitude() function. The library does not work well so i made my own.
   for (int i = 0; i < BUFFER_LENGTH; i++) 
   {
     realValues[i] = sqrt(realValues[i] * realValues[i] + imaginaryValues[i] * imaginaryValues[i]);
@@ -147,6 +149,8 @@ void calculateMagnitude()
 
 int findFirstMajorPeak(float magnitude[])
 {
+  //funtion detects pitch frequency bin by finding peak within range set by threshold value (FREQUENCY_PEAK_THRESHOLD).
+  //FREQUENCY_PEAK_THRESHOLD was set empirically so it would need some tuning to work with all guitar pickups.
   int indexAboveThreshold = findIndexAboveThreshold(magnitude);
   int indexBelowThreshold = findIndexBelowThreshold(magnitude,indexAboveThreshold);
   int peakIndex = findMaxIndexInRange(magnitude, indexAboveThreshold, indexBelowThreshold);
@@ -175,11 +179,9 @@ int findMaxIndexInRange(float arr[], int start, int end) {
   return maxIndex;
 }
 
-
-
-
 const float getClosestTETFrequency(float measuredFrequency)
 { 
+  //function assigns detected pitch to the closest frequency given by 12-ET note
   float closestFrequency = frequencies[0];
   float minDifference = abs(measuredFrequency - frequencies[0]);
 
@@ -190,7 +192,7 @@ const float getClosestTETFrequency(float measuredFrequency)
     return 0.0;
   }
 
-  for (int i = 1; i < 43; i++) 
+  for (int i = 1; i < FREQUENCIES_ARRAY_LENGTH; i++) 
   {
     float diff = abs(measuredFrequency - frequencies[i]);
     if (diff < minDifference) 
@@ -205,6 +207,7 @@ const float getClosestTETFrequency(float measuredFrequency)
 
 void displayCentsDeviation(float baseFrequency, float measuredFrequency)
 {
+  //function displays deviation from detected note in cents on LED display
   if (isnan(measuredFrequency) || isnan(baseFrequency) || measuredFrequency < 0 || baseFrequency <= 0) 
   {
     return;
@@ -243,6 +246,8 @@ float calculateDeviationInCents(float measuredFrequency, float targetFrequency) 
 
 float calculateParabolicInterpolation(int peakIndex, float frequencyMagnitude[])
 {
+  //function performs parabolic interpolation to a peak detected in signal spectrum 
+  //and returns index with offset
   float offset;
   float interpolatedIndex; 
 
