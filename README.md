@@ -16,6 +16,6 @@ my own design and code (look at guitarTunerDisplay.cpp)
 
 The device is designed to work with an analog signal processing path utilizing low pass filters for antialiasing purposes and
 with designed display described in the previous paragraph.
-The documentation for electrical connections is provided in the repository.
+The documentation for electrical connections is provided in the repository (schematic.pdf).
 
 
